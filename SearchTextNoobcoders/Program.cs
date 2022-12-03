@@ -6,6 +6,7 @@ using Nest;
 
 public class MainClass
 {
+    private static ElasticClient _client;
     public static void Main()
     {
         Menu.Start();
@@ -14,11 +15,35 @@ public class MainClass
         var post = new List<Posts>();
         post = CSV.CsvLoad();
 
+        var settings = new ConnectionSettings(new Uri("https://localhost:9200"))
+            .CertificateFingerprint("9d4b8ef8c876db75242b403dbab3df1e9dee3fd98a192442785925db65059e1c")
+            .BasicAuthentication("elastic", "--qo*kYItsydWmIVl*IG")
+            .DefaultIndex("posts");
+
+        _client = new ElasticClient(settings);
+
+        var indexResponse = _client.IndexMany(post);
+
+        var searchResponse = _client.Search<Posts>(s => s
+            .From(0)
+            .Size(10)
+            .Query(q => q
+                .Match(m => m
+                    .Field(f => f.Text)
+                    .Query("Слив")
+                    )
+                )
+            );
+        foreach(var response in searchResponse.Hits)
+        {
+            Console.WriteLine(response.Source.Text);
+        }
 
         Menu.Find();
 
         Menu.Out();
     }
+
 }
 
 public class Menu
