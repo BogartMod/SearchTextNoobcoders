@@ -1,11 +1,18 @@
 ﻿using System;
+using System.Globalization;
 using CsvHelper;
+using CsvHelper.Configuration.Attributes;
+using Nest;
 
 public class MainClass
 {
     public static void Main()
     {
         Menu.Start();
+        CSV.Path = @"..\..\..\posts.csv";
+        
+        var post = new List<Posts>();
+        post = CSV.CsvLoad();
 
 
         Menu.Find();
@@ -33,18 +40,25 @@ public class Menu
 
 public class CSV
 {
-    public string Path { get; set; }
-    static bool CsvLoad(Path)
+    public static string Path { get; set; }
+    public static List<Posts> CsvLoad()
     {
+        var records = new List<Posts>();
         using (var reader = new StreamReader(Path)) 
             using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
         {
-            var records = csv.GetRecords<>();
+            records = csv.GetRecords<Posts>().ToList();
         }
+        return records;
     }
 }
 
-public class Listik
+public class Posts
 {
-    public 
+    [Name("text")]
+    public string? Text { get; set; }
+    [Name("created_date")]
+    public DateTime? Created_date { get; set; }
+    [Name("rubrics")]
+    public string? Rubrics { get; set; }
 }
