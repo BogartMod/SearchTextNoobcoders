@@ -6,54 +6,59 @@ using Nest;
 
 public class MainClass
 {
-    private static ElasticClient _client;
+    //private static ElasticClient _client;
     public static void Main()
     {
-        Menu.Start();
-        CSV.Path = @"..\..\..\posts.csv";
-        
-        var post = new List<Posts>();
-        post = CSV.CsvLoad();
-
-        var settings = new ConnectionSettings(new Uri("https://localhost:9200"))
-            .CertificateFingerprint("9d4b8ef8c876db75242b403dbab3df1e9dee3fd98a192442785925db65059e1c")
-            .BasicAuthentication("elastic", "--qo*kYItsydWmIVl*IG")
-            .DefaultIndex("posts");
-
-        _client = new ElasticClient(settings);
-
-        var indexResponse = _client.IndexMany(post);
-
-        var searchResponse = _client.Search<Posts>(s => s
-            .From(0)
-            .Size(10)
-            .Query(q => q
-                .Match(m => m
-                    .Field(f => f.Text)
-                    .Query("Слив")
-                    )
-                )
-            );
-        foreach(var response in searchResponse.Hits)
+        var num = Menu.Start();
+        switch (num)
         {
-            Console.WriteLine(response.Source.Text);
+            case 1:
+                {
+                    Menu.FilePath();
+                    //CSV.Path = @"..\..\..\posts.csv";
+                    CSV.Path = Console.ReadLine();
+                    List<Posts> ListFromFile = CSV.CsvLoad();
+                    NEST.Index(ListFromFile);
+                    break;
+                }
+            case 2:
+                {
+                    Menu.Search();
+                    Menu.Print( 
+                        NEST.GetPosts(
+                            Console.ReadLine()
+                            )
+                        );
+                    break;
+                }
         }
-
-        Menu.Find();
-
-        Menu.Out();
     }
 
 }
 
 public class Menu
 {
-    public static void Start()
+    public static int Start()
     {
-        Console.WriteLine("Введите имя файла:");
+        Console.Clear();
+        Console.WriteLine("Введите номер действия:");
+        Console.WriteLine("1. Добавить файл в индекс");
+        Console.WriteLine("2. Найти текст");
+        //Console.WriteLine("3. Переиндексировать базу");
+        //Console.WriteLine("4. Удалить запись из индекса");
+        //Console.WriteLine("5. Tests");
+        return int.Parse(Console.ReadLine());
     }
-    public static void Find()
+
+    public static void FilePath()
     {
+        Console.Clear();
+        Console.WriteLine("Введите относительный или абсолютный путь к файлу:");
+    }
+
+    public static void Search()
+    {
+        Console.Clear();
         Console.WriteLine("Введите искомый текст");
     }
 
@@ -61,16 +66,32 @@ public class Menu
     {
         Console.WriteLine("Найденные результаты:");
     }
+
+    public static void Delete()
+    {
+        Console.WriteLine("Запись удалена");
+    }
+
+    public static void Print(List<Posts> List)
+    {
+        Console.WriteLine("Найденные результаты:");
+        foreach (var response in List)
+        {
+            Console.WriteLine(response.Text);
+            Console.WriteLine("_______________________________");
+
+        }
+    }
 }
 
-public class CSV
+public static class CSV
 {
     public static string Path { get; set; }
     public static List<Posts> CsvLoad()
     {
         var records = new List<Posts>();
-        using (var reader = new StreamReader(Path)) 
-            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+        using (var reader = new StreamReader(Path))
+        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
         {
             records = csv.GetRecords<Posts>().ToList();
         }
@@ -86,4 +107,45 @@ public class Posts
     public DateTime? Created_date { get; set; }
     [Name("rubrics")]
     public string? Rubrics { get; set; }
+}
+
+public static class NEST
+{
+    private static ElasticClient _client;
+    public static ConnectionSettings ConnectionSettings
+    {
+        get
+        {
+            return new ConnectionSettings(new Uri("https://localhost:9200"))
+                .CertificateFingerprint("9d4b8ef8c876db75242b403dbab3df1e9dee3fd98a192442785925db65059e1c")
+                .BasicAuthentication("elastic", "--qo*kYItsydWmIVl*IG")
+                .DefaultIndex("posts");
+        }
+    }
+    static ElasticClient Client { get { return _client ?? (_client = new ElasticClient(ConnectionSettings)); } }
+    public static void Index(List<Posts> posts)
+    {
+        var indexResponse = Client.IndexMany(posts);
+    }
+
+    public static List<Posts> GetPosts(string searchText)
+    {
+        var posts = new List<Posts>();
+        var searchResponse = Client.Search<Posts>(s => s
+            .From(0)
+            .Size(20)
+            .Query(q => q
+                .Match(m => m
+                    .Field(f => f.Text)
+                    .Query(searchText)
+                    )
+                )
+            );
+
+        foreach (var response in searchResponse.Hits)
+        {
+            posts.Add(response.Source);
+        }
+        return posts;
+    }
 }
