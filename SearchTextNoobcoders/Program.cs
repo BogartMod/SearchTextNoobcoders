@@ -9,10 +9,10 @@ public class MainClass
     //private static ElasticClient _client;
     public static void Main()
     {
-        int num;
+        var num;
         do
         {
-            num = Menu.Start();
+            Menu.Start();
             switch (num)
             {
                 case 0: break;
@@ -35,11 +35,6 @@ public class MainClass
                             );
                         break;
                     }
-                //case 3:
-                //    {
-
-                //        break;
-                //    }
             }
         }
         while (num!=0);
@@ -55,10 +50,9 @@ public class Menu
         Console.WriteLine("Введите номер действия:");
         Console.WriteLine("1. Добавить файл в индекс");
         Console.WriteLine("2. Найти текст");
-        //Console.WriteLine("3. Очистить индекс");
-        //Console.WriteLine(". Переиндексировать базу");
-        //Console.WriteLine(". Удалить запись из индекса");
-        //Console.WriteLine(". Tests");
+        //Console.WriteLine("3. Переиндексировать базу");
+        //Console.WriteLine("4. Удалить запись из индекса");
+        //Console.WriteLine("5. Tests");
         Console.WriteLine("0. Выход");
         return int.Parse(Console.ReadLine());
     }
@@ -160,13 +154,5 @@ public static class NEST
             posts.Add(response.Source);
         }
         return posts;
-    }
-
-    public static bool DeleteIndex()
-    {
-        //Client.Delete(1,d =>d
-       
-        //);
-        return true;
     }
 }
