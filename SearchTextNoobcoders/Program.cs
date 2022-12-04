@@ -9,29 +9,35 @@ public class MainClass
     //private static ElasticClient _client;
     public static void Main()
     {
-        var num = Menu.Start();
-        switch (num)
+        var num;
+        do
         {
-            case 1:
-                {
-                    Menu.FilePath();
-                    //CSV.Path = @"..\..\..\posts.csv";
-                    CSV.Path = Console.ReadLine();
-                    List<Posts> ListFromFile = CSV.CsvLoad();
-                    NEST.Index(ListFromFile);
-                    break;
-                }
-            case 2:
-                {
-                    Menu.Search();
-                    Menu.Print( 
-                        NEST.GetPosts(
-                            Console.ReadLine()
-                            )
-                        );
-                    break;
-                }
+            Menu.Start();
+            switch (num)
+            {
+                case 0: break;
+                case 1: //Add file to index
+                    {
+                        Menu.FilePath();
+                        //CSV.Path = @"..\..\..\posts.csv";
+                        CSV.Path = Console.ReadLine();
+                        List<Posts> ListFromFile = CSV.CsvLoad();
+                        NEST.Index(ListFromFile);
+                        break;
+                    }
+                case 2: //Search Text
+                    {
+                        Menu.Search();
+                        Menu.Print(
+                            NEST.GetPosts(
+                                Console.ReadLine()
+                                )
+                            );
+                        break;
+                    }
+            }
         }
+        while (num!=0);
     }
 
 }
@@ -47,6 +53,7 @@ public class Menu
         //Console.WriteLine("3. Переиндексировать базу");
         //Console.WriteLine("4. Удалить запись из индекса");
         //Console.WriteLine("5. Tests");
+        Console.WriteLine("0. Выход");
         return int.Parse(Console.ReadLine());
     }
 
